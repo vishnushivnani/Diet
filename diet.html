@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Diet Planner</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f7f7f7;
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2em;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    select, button, input {
+      padding: 8px;
+      font-size: 16px;
+      width: 100%;
+      max-width: 250px;
+      margin: 5px 0;
+    }
+    .meal-plan {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .meal {
+      margin-bottom: 10px;
+    }
+    .totals {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .meal-inputs {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .meal-inputs input {
+      margin-bottom: 10px;
+      width: 100%;
+      max-width: 250px;
+    }
+    .refresh-button {
+      background-color: #f44336;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .controls {
+        flex-direction: column;
+        align-items: center;
+      }
+      .meal-plan {
+        width: 90%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.5em;
+      }
+      select, button, input {
+        width: 100%;
+      }
+      .meal-plan {
+        padding: 15px;
+      }
+      .meal {
+        font-size: 14px;
+      }
+      .totals {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Smart Diet Planner</h1>
+
+<div class="controls">
+  <select id="dietType" onchange="generateMealPlanFromUI()">
+    <option>Vegetarian</option>
+    <option>Non-Vegetarian</option>
+  </select>
+  <select id="goal" onchange="generateMealPlanFromUI()">
+    <option>Weight Loss</option>
+    <option>Weight Gain</option>
+  </select>
+</div>
+
+<div class="meal-inputs">
+  <h3>Add Custom Meal</h3>
+  <input type="text" id="mealName" placeholder="Meal Name" />
+  <input type="number" id="mealCalories" placeholder="Calories" />
+  <input type="number" id="mealProtein" placeholder="Protein (g)" />
+  <button onclick="addCustomMeal()">Add Meal</button>
+  <button class="refresh-button" onclick="refreshCustomMeals()">Refresh Custom Meals</button>
+</div>
+
+<div class="meal-plan" id="mealPlan">
+  <p>Select a diet type and goal to view meals.</p>
+</div>
+
+<script>
+  const samplePlans = {
+    "Vegetarian-Weight Loss": [
+      { name: "Plan 1", meals: [ { time: "Morning", item: "Lemon water + almonds", calories: 80, protein: 2 }, { time: "Breakfast", item: "Oats with fruits", calories: 300, protein: 8 }, { time: "Lunch", item: "Brown rice + dal", calories: 450, protein: 12 }, { time: "Snack", item: "Green tea + chana", calories: 150, protein: 5 }, { time: "Dinner", item: "Chapati + sabzi", calories: 400, protein: 10 } ] },
+      { name: "Plan 2", meals: [ { time: "Morning", item: "Warm water + chia seeds", calories: 70, protein: 1 }, { time: "Breakfast", item: "Poha + curd", calories: 350, protein: 9 }, { time: "Lunch", item: "Quinoa + rajma", calories: 500, protein: 15 }, { time: "Snack", item: "Fruit bowl", calories: 100, protein: 1 }, { time: "Dinner", item: "Soup + grilled paneer", calories: 380, protein: 12 } ] },
+      { name: "Plan 3", meals: [ { time: "Morning", item: "Jeera water + walnuts", calories: 90, protein: 2 }, { time: "Breakfast", item: "Upma with veggies", calories: 320, protein: 7 }, { time: "Lunch", item: "Khichdi + salad", calories: 460, protein: 13 }, { time: "Snack", item: "Coconut water + nuts", calories: 130, protein: 3 }, { time: "Dinner", item: "Daliya + tofu", calories: 390, protein: 11 } ] },
+      { name: "Plan 4", meals: [ { time: "Morning", item: "Ginger tea + 2 dates", calories: 85, protein: 1 }, { time: "Breakfast", item: "Veg sandwich", calories: 330, protein: 8 }, { time: "Lunch", item: "Palak dal + brown rice", calories: 470, protein: 14 }, { time: "Snack", item: "Buttermilk + murmura", calories: 120, protein: 4 }, { time: "Dinner", item: "Veg soup + chapati", calories: 400, protein: 10 } ] },
+      { name: "Plan 5", meals: [ { time: "Morning", item: "Detox water + seeds", calories: 100, protein: 3 }, { time: "Breakfast", item: "Idli + sambar", calories: 340, protein: 9 }, { time: "Lunch", item: "Tofu curry + millet roti", calories: 480, protein: 15 }, { time: "Snack", item: "Boiled corn", calories: 140, protein: 4 }, { time: "Dinner", item: "Paneer + veggies", calories: 410, protein: 12 } ] }
+    ],
+    "Vegetarian-Weight Gain": [
+      { name: "Plan 1", meals: [ { time: "Morning", item: "Banana shake + nuts", calories: 250, protein: 6 }, { time: "Breakfast", item: "Paratha + curd", calories: 500, protein: 12 }, { time: "Lunch", item: "White rice + dal + paneer", calories: 600, protein: 18 }, { time: "Snack", item: "Milk + banana", calories: 300, protein: 6 }, { time: "Dinner", item: "Chapati + sabzi", calories: 450, protein: 10 } ] },
+      { name: "Plan 2", meals: [ { time: "Morning", item: "Milk + almonds", calories: 220, protein: 5 }, { time: "Breakfast", item: "Cheese toast", calories: 400, protein: 11 }, { time: "Lunch", item: "Rajma + rice", calories: 520, protein: 15 }, { time: "Snack", item: "Lassi", calories: 200, protein: 6 }, { time: "Dinner", item: "Dosa + chutney", calories: 480, protein: 9 } ] },
+      { name: "Plan 3", meals: [ { time: "Morning", item: "Dry fruits + smoothie", calories: 270, protein: 7 }, { time: "Breakfast", item: "Upma + peanut chutney", calories: 410, protein: 10 }, { time: "Lunch", item: "Paneer sabzi + roti", calories: 560, protein: 16 }, { time: "Snack", item: "Fruit shake", calories: 250, protein: 5 }, { time: "Dinner", item: "Rice + mix veg", calories: 490, protein: 12 } ] },
+      { name: "Plan 4", meals: [ { time: "Morning", item: "Milk + granola", calories: 300, protein: 8 }, { time: "Breakfast", item: "Idli + peanut chutney", calories: 350, protein: 9 }, { time: "Lunch", item: "Chole + rice", calories: 550, protein: 15 }, { time: "Snack", item: "Nuts + jaggery", calories: 200, protein: 4 }, { time: "Dinner", item: "Khichdi + curd", calories: 500, protein: 10 } ] },
+      { name: "Plan 5", meals: [ { time: "Morning", item: "Peanut butter toast", calories: 330, protein: 9 }, { time: "Breakfast", item: "Vegetable paratha + lassi", calories: 500, protein: 12 }, { time: "Lunch", item: "Kadhi + rice + salad", calories: 520, protein: 13 }, { time: "Snack", item: "Mango shake", calories: 250, protein: 5 }, { time: "Dinner", item: "Paneer curry + roti", calories: 510, protein: 14 } ] }
+    ],
+    "Non-Vegetarian-Weight Loss": [
+      { name: "Plan 1", meals: [ { time: "Morning", item: "Black coffee + boiled egg", calories: 90, protein: 7 }, { time: "Breakfast", item: "Scrambled eggs + whole wheat toast", calories: 250, protein: 15 }, { time: "Lunch", item: "Grilled chicken + quinoa + steamed veggies", calories: 400, protein: 35 }, { time: "Snack", item: "Greek yogurt + almonds", calories: 150, protein: 12 }, { time: "Dinner", item: "Baked fish + sautéed spinach", calories: 350, protein: 40 } ] },
+      { name: "Plan 2", meals: [ { time: "Morning", item: "Green tea + walnuts", calories: 80, protein: 3 }, { time: "Breakfast", item: "Omelet with mushrooms + whole wheat toast", calories: 280, protein: 18 }, { time: "Lunch", item: "Grilled turkey + brown rice + salad", calories: 420, protein: 38 }, { time: "Snack", item: "Cottage cheese + cucumber slices", calories: 160, protein: 14 }, { time: "Dinner", item: "Stir-fried shrimp + broccoli", calories: 370, protein: 42 } ] },
+      { name: "Plan 3", meals: [ { time: "Morning", item: "Lemon water + boiled eggs", calories: 100, protein: 12 }, { time: "Breakfast", item: "Scrambled eggs + avocado toast", calories: 300, protein: 20 }, { time: "Lunch", item: "Grilled fish + quinoa + steamed veggies", calories: 450, protein: 40 }, { time: "Snack", item: "Greek yogurt + flaxseeds", calories: 180, protein: 15 }, { time: "Dinner", item: "Chicken stir-fry + cauliflower rice", calories: 400, protein: 45 } ] },
+      { name: "Plan 4", meals: [ { time: "Morning", item: "Herbal tea + almonds", calories: 90, protein: 5 }, { time: "Breakfast", item: "Egg white omelet + whole wheat toast", calories: 250, protein: 18 }, { time: "Lunch", item: "Grilled salmon + steamed broccoli", calories: 420, protein: 42 }, { time: "Snack", item: "Cottage cheese + walnuts", calories: 170, protein: 16 }, { time: "Dinner", item: "Baked chicken + roasted veggies", calories: 380, protein: 44 } ] },
+      { name: "Plan 5", meals: [ { time: "Morning", item: "Black coffee + boiled eggs", calories: 100, protein: 12 }, { time: "Breakfast", item: "Scrambled eggs + spinach", calories: 280, protein: 20 }, { time: "Lunch", item: "Grilled turkey + quinoa + salad", calories: 450, protein: 40 }, { time: "Snack", item: "Greek yogurt + chia seeds", calories: 160, protein: 14 }, { time: "Dinner", item: "Stir-fried shrimp + zucchini noodles", calories: 370, protein: 42 } ] }
+    ],
+    "Non-Vegetarian-Weight Gain": [
+      { name: "Plan 1", meals: [ { time: "Morning", item: "Banana smoothie + peanut butter toast", calories: 350, protein: 12 }, { time: "Breakfast", item: "Scrambled eggs + cheese + whole wheat toast", calories: 450, protein: 25 }, { time: "Lunch", item: "Chicken curry + white rice + dal", calories: 700, protein: 45 }, { time: "Snack", item: "Protein shake + almonds", calories: 300, protein: 30 }, { time: "Dinner", item: "Grilled salmon + mashed potatoes", calories: 600, protein: 50 } ] },
+      { name: "Plan 2", meals: [ { time: "Morning", item: "Milk + boiled eggs", calories: 250, protein: 18 }, { time: "Breakfast", item: "Cheese omelet + whole wheat toast", calories: 500, protein: 30 }, { time: "Lunch", item: "Mutton curry + naan + salad", calories: 800, protein: 50 }, { time: "Snack", item: "Peanut butter + banana", calories: 350, protein: 15 }, { time: "Dinner", item: "Grilled chicken + pasta", calories: 650, protein: 55 } ] },
+      { name: "Plan 3", meals: [ { time: "Morning", item: "Protein shake + nuts", calories: 300, protein: 25 }, { time: "Breakfast", item: "Scrambled eggs + cheese + toast", calories: 500, protein: 30 }, { time: "Lunch", item: "Fish curry + white rice + dal", calories: 750, protein: 48 }, { time: "Snack", item: "Greek yogurt + granola", calories: 350, protein: 20 }, { time: "Dinner", item: "Grilled steak + mashed potatoes", calories: 700, protein: 60 } ] },
+      { name: "Plan 4", meals: [ { time: "Morning", item: "Whole milk + boiled eggs", calories: 300, protein: 20 }, { time: "Breakfast", item: "Cheese omelet + toast", calories: 550, protein: 35 }, { time: "Lunch", item: "Chicken biryani + raita", calories: 850, protein: 55 }, { time: "Snack", item: "Peanut butter + banana smoothie", calories: 400, protein: 25 }, { time: "Dinner", item: "Grilled lamb + mashed potatoes", calories: 750, protein: 65 } ] },
+      { name: "Plan 5", meals: [ { time: "Morning", item: "Protein shake + almonds", calories: 350, protein: 30 }, { time: "Breakfast", item: "Scrambled eggs + cheese + toast", calories: 500, protein: 35 }, { time: "Lunch", item: "Fish curry + white rice + dal", calories: 800, protein: 50 }, { time: "Snack", item: "Greek yogurt + granola", calories: 400, protein: 25 }, { time: "Dinner", item: "Grilled chicken + sweet potatoes", calories: 700, protein: 60 } ] }
+    ]
+  };
+
+  let customMeals = [];
+
+  function generateMealPlanFromUI() {
+    const dietType = document.getElementById("dietType").value;
+    const goal = document.getElementById("goal").value;
+    generateMealPlan(dietType, goal);
+  }
+
+  function generateMealPlan(dietType, goal) {
+    const key = `${dietType}-${goal}`;
+    const plans = samplePlans[key] || [];
+    let mealPlansHTML = '';
+    plans.forEach(plan => {
+      mealPlansHTML += `<h3>${plan.name}</h3><ul>`;
+      let totalCalories = 0;
+      let totalProtein = 0;
+      plan.meals.forEach(meal => {
+        mealPlansHTML += `<li class="meal"><strong>${meal.time}:</strong> ${meal.item} - ${meal.calories} kcal, ${meal.protein}g protein</li>`;
+        totalCalories += meal.calories;
+        totalProtein += meal.protein;
+      });
+
+      // Add custom meals
+      if (customMeals.length > 0) {
+        mealPlansHTML += `<li class="meal"><em>Custom Meals:</em></li>`;
+        customMeals.forEach(custom => {
+          mealPlansHTML += `<li class="meal">${custom.name} - ${custom.calories} kcal, ${custom.protein}g protein</li>`;
+          totalCalories += custom.calories;
+          totalProtein += custom.protein;
+        });
+      }
+
+      mealPlansHTML += `</ul><div class="totals">Total: ${totalCalories} kcal, ${totalProtein}g protein</div>`;
+    });
+
+    document.getElementById("mealPlan").innerHTML = mealPlansHTML;
+  }
+
+  function addCustomMeal() {
+    const name = document.getElementById("mealName").value.trim();
+    const calories = parseInt(document.getElementById("mealCalories").value);
+    const protein = parseInt(document.getElementById("mealProtein").value);
+
+    if (!name || isNaN(calories) || isNaN(protein)) {
+      alert("Please fill in all custom meal fields.");
+      return;
+    }
+
+    customMeals.push({ name, calories, protein });
+    generateMealPlanFromUI();
+
+    document.getElementById("mealName").value = '';
+    document.getElementById("mealCalories").value = '';
+    document.getElementById("mealProtein").value = '';
+  }
+
+  function refreshCustomMeals() {
+    customMeals = [];
+    generateMealPlanFromUI();
+  }
+
+  // Generate initial plan
+  window.onload = generateMealPlanFromUI;
+</script>
+
+</body>
+</html>
